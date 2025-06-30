@@ -1,256 +1,715 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MOS Burger</title>
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-
-
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MOS Burgers Menu with Customer Management</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        /* Add this style to make the navbar transparent */
-        
-        .nav {
-            width: 100%;
-            background-color: rgba(0, 0, 0, 0.3);
-            /* Set the transparency to 0.3 */
-            overflow: hidden;
-        }
-        
-        .nav a {
-            padding: 14px 16px;
-            float: left;
-            text-decoration: none;
-            color: #fff;
-        }
-        
-        .nav a:hover {
-            background-color: #fff;
-            color: black;
-        }
-        
-        .nav a.active {
-            background-color: #088;
-            color: white;
-        }
-        /*  */
-        
-        #carouselExampleDark .carousel-item img {
-            object-fit: cover;
-            height: 450px;
-            /* Adjust the height as needed */
-            width: 100%;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+      header,
+      footer {
+        background: #dc3545;
+        color: #fff;
+        padding: 1em;
+        text-align: center;
+      }
+      nav {
+        background: #343a40;
+        padding: 0.5em;
+        text-align: center;
+      }
+      nav a {
+        color: #fff;
+        margin: 0 1em;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      main {
+        padding: 2em;
+        max-width: 900px;
+        margin: auto;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1em;
+      }
+      .item {
+        border: 1px solid #ccc;
+        padding: 1em;
+        text-align: center;
+        cursor: pointer;
+      }
+      .item img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+      }
+      .order-summary,
+      .customer-management {
+        margin-top: 2em;
+        border-top: 1px solid #ccc;
+        padding-top: 1em;
+      }
+      .order-list {
+        margin-top: 1em;
+      }
+      label {
+        display: block;
+        margin-top: 1em;
+      }
+      input,
+      button,
+      select {
+        padding: 0.5em;
+        width: 100%;
+        max-width: 300px;
+        margin-top: 0.2em;
+      }
+      button {
+        cursor: pointer;
+        background: #dc3545;
+        border: none;
+        color: white;
+        font-weight: bold;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1em;
+      }
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 0.5em;
+        text-align: left;
+      }
+      .btn-small {
+        width: auto;
+        padding: 0.3em 0.6em;
+        margin-right: 0.3em;
+      }
+      .error {
+        color: red;
+        margin-top: 0.5em;
+      }
     </style>
+  </head>
+  <body>
+    <header>
+      <h1>MOS Burgers Full Menu & Customer Management</h1>
+    </header>
+    <nav>
+      <a onclick="showSection('menuSection')">Menu & Orders</a>
+      <a onclick="showSection('customerSection')">Customer Management</a>
+      <a onclick="showSection('customerSection')">Reports</a>
+    </nav>
+    <main>
+      <!-- Menu & Order Section -->
+      <section id="menuSection">
+        <div id="menu"></div>
 
-</head>
+        <div class="order-summary">
+          <h2>Order Management</h2>
 
-<body>
-    <div class="container">
-        <div class="row">
+          <!-- Customer info inputs -->
+          <label for="customerName">Customer Name:</label>
+          <input
+            type="text"
+            id="customerName"
+            placeholder="Enter customer name"
+          />
 
+          <label for="customerPhone">Telephone Number:</label>
+          <input
+            type="tel"
+            id="customerPhone"
+            placeholder="Enter telephone number"
+          />
 
+          <div class="order-list" id="orderList"></div>
+          <h3>Total: LKR <span id="total">0.00</span></h3>
+          <button onclick="generatePDF()">Generate PDF Bill</button>
+        </div>
+      </section>
 
+      <!-- Customer Management Section -->
+      <section id="customerSection" style="display: none">
+        <h2>Customer Management</h2>
 
-            <!--nav bar  -->
-            <nav class="navbar navbar-expand-lg bg-body-tertiary">
-                <div class="container-fluid">
-                    <a class="navbar-brand" href="#">MOS Burgers</a>
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
+        <form id="customerForm">
+          <input type="hidden" id="editCustomerId" />
+          <label for="custName">Name:</label>
+          <input
+            type="text"
+            id="custName"
+            required
+            placeholder="Customer Name"
+          />
+
+          <label for="custPhone">Telephone:</label>
+          <input
+            type="tel"
+            id="custPhone"
+            required
+            placeholder="Telephone Number"
+          />
+
+          <button type="submit">Add Customer</button>
+          <button
+            type="button"
+            onclick="resetCustomerForm()"
+            style="background: #6c757d"
+          >
+            Cancel
           </button>
-                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                            <li class="nav-item">
-                                <a class="nav-link active" aria-current="page" href="#">Home</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">Link</a>
-                            </li>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  Dropdown
-                </a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="#">Action</a></li>
-                                    <li><a class="dropdown-item" href="#">Another action</a></li>
-                                    <li>
-                                        <hr class="dropdown-divider">
-                                    </li>
-                                    <li><a class="dropdown-item" href="#">Something else here</a></li>
-                                </ul>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link disabled" aria-disabled="true">Disabled</a>
-                            </li>
-                        </ul>
-                        <form class="d-flex" role="search">
-                            <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                            <button class="btn btn-outline-success" type="submit">Search</button>
-                        </form>
-                    </div>
-                </div>
-            </nav>
+          <div class="error" id="formError"></div>
+        </form>
 
-            <!--  -->
-            <div id="carouselExampleDark" class="carousel carousel-dark slide col-12 col">
-                <div class="carousel-indicators">
-                    <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-                    <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="1" aria-label="Slide 2"></button>
-                    <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="2" aria-label="Slide 3"></button>
-                </div>
-                <div class="carousel-inner">
-                    <div class="carousel-item active" data-bs-interval="10000">
-                        <img src="asset\images\delicious-burger-with-many-ingredients-isolated-white-background-tasty-cheeseburger-splash-sauce.jpg" class="d-block w-100" alt="...">
-                        <div class="carousel-caption d-none d-md-block">
-                            <h5>First slide label</h5>
-                            <p>Some representative placeholder content for the first slide.</p>
-                        </div>
-                    </div>
-                    <div class="carousel-item" data-bs-interval="2000">
-                        <img src="asset\images\home-made-tasty-burgers.jpg" class="d-block w-100" alt="...">
-                        <div class="carousel-caption d-none d-md-block">
-                            <h5>Second slide label</h5>
-                            <p>Some representative placeholder content for the second slide.</p>
-                        </div>
-                    </div>
-                    <div class="carousel-item">
-                        <img src="asset\images\tasty-cheeseburger-with-lettuce.jpg" class="d-block w-100" alt="...">
-                        <div class="carousel-caption d-none d-md-block">
-                            <h5>Third slide label</h5>
-                            <p>Some representative placeholder content for the third slide.</p>
-                        </div>
-                    </div>
-                </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleDark" data-bs-slide="prev">
-          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-          <span class="visually-hidden">Previous</span>
-        </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleDark" data-bs-slide="next">
-          <span class="carousel-control-next-icon" aria-hidden="true"></span>
-          <span class="visually-hidden">Next</span>
-        </button>
-            </div>
-            <!--  -->
+        <h3>Existing Customers</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Telephone</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="customerTableBody">
+            <!-- populated dynamically -->
+          </tbody>
+        </table>
+      </section>
+      <!-- Reports Section -->
+      <section id="reportSection" style="display: none">
+        <h2>Reports</h2>
 
-            <!--  -->
-            <div class="col-12">
+        <label for="reportMonth">Select Month:</label>
+        <input type="month" id="reportMonth" />
 
-                <body>
-                    <div class="swiper">
-                        <div class="swiper-wrapper">
-                            <div class="swiper-slide">
-                                <div class="content">
-                                    <h1>The Colosseum</h1>
-                                    <p>
-                                        The Colosseum is a huge amphitheater in Rome, Italy. A very long time ago, the ancient Romans built it for exciting shows and fights, especially gladiator contests. The Colosseum which is made of strong materials like concrete and sand is a a symbol of
-                                        ancient Roman engineering and entertainment.
-                                    </p>
-                                    <div class="btn">More about<span class="btn-border"></span></div>
-                                </div>
+        <label for="reportYear">Select Year:</label>
+        <input
+          type="number"
+          id="reportYear"
+          placeholder="e.g., 2025"
+          min="2020"
+        />
 
+        <button onclick="generateMonthlyReport()">Monthly Report</button>
+        <button onclick="generateTopCustomers()">Top Customers</button>
+        <button onclick="generateAnnualReport()">Annual Sales</button>
+        <button onclick="generateItemCountReport()">Item Count</button>
 
-                                <div id="particles-js"></div>
-                </body>
+        <div id="reportOutput" style="margin-top: 2em"></div>
+      </section>
+    </main>
+    <footer>
+      <p>&copy; 2025 MOS Burgers</p>
+    </footer>
 
+    <script>
+      // --- Menu and ordering ---
+      const items = [
+        {
+          code: "B1001",
+          name: "Classic Burger (Large)",
+          price: 750,
+          discount: 0,
+        },
+        {
+          code: "B1002",
+          name: "Classic Burger (Regular)",
+          price: 1500,
+          discount: 15,
+        },
+        { code: "B1003", name: "Turkey Burger", price: 1600, discount: 0 },
+        {
+          code: "B1004",
+          name: "Chicken Burger (Large)",
+          price: 1400,
+          discount: 0,
+        },
+        {
+          code: "B1005",
+          name: "Chicken Burger (Regular)",
+          price: 800,
+          discount: 20,
+        },
+        {
+          code: "B1006",
+          name: "Cheese Burger (Large)",
+          price: 1000,
+          discount: 0,
+        },
+        {
+          code: "B1007",
+          name: "Cheese Burger (Regular)",
+          price: 600,
+          discount: 0,
+        },
+        { code: "B1008", name: "Bacon Burger", price: 650, discount: 15 },
+        { code: "B1009", name: "Shawarma Burger", price: 800, discount: 0 },
+        { code: "B1010", name: "Olive Burger", price: 1800, discount: 0 },
+        {
+          code: "B1012",
+          name: "Double-Cheese Burger",
+          price: 1250,
+          discount: 20,
+        },
+        {
+          code: "B1013",
+          name: "Crispy Chicken Burger (Regular)",
+          price: 1200,
+          discount: 0,
+        },
+        {
+          code: "B1014",
+          name: "Crispy Chicken Burger (Large)",
+          price: 1600,
+          discount: 10,
+        },
+        { code: "B1015", name: "Paneer Burger", price: 900, discount: 0 },
+        {
+          code: "B1016",
+          name: "Crispy Chicken Submarine (Large)",
+          price: 2000,
+          discount: 0,
+        },
+        {
+          code: "B1017",
+          name: "Crispy Chicken Submarine (Regular)",
+          price: 1500,
+          discount: 0,
+        },
+        {
+          code: "B1018",
+          name: "Chicken Submarine (Large)",
+          price: 1800,
+          discount: 3,
+        },
+        {
+          code: "B1019",
+          name: "Chicken Submarine (Regular)",
+          price: 1400,
+          discount: 0,
+        },
+        { code: "B1020", name: "Grinder Submarine", price: 2300, discount: 0 },
+        { code: "B1021", name: "Cheese Submarine", price: 2200, discount: 0 },
+        {
+          code: "B1022",
+          name: "Double Cheese n Chicken Submarine",
+          price: 1900,
+          discount: 16,
+        },
+        {
+          code: "B1023",
+          name: "Special Horgie Submarine",
+          price: 2800,
+          discount: 0,
+        },
+        {
+          code: "B1024",
+          name: "MOS Special Submarine",
+          price: 3000,
+          discount: 0,
+        },
+        {
+          code: "B1025",
+          name: "Steak Fries (Large)",
+          price: 1200,
+          discount: 0,
+        },
+        {
+          code: "B1026",
+          name: "Steak Fries (Medium)",
+          price: 600,
+          discount: 0,
+        },
+        {
+          code: "B1027",
+          name: "French Fries (Large)",
+          price: 800,
+          discount: 0,
+        },
+        {
+          code: "B1028",
+          name: "French Fries (Medium)",
+          price: 650,
+          discount: 0,
+        },
+        {
+          code: "B1029",
+          name: "French Fries (Small)",
+          price: 450,
+          discount: 0,
+        },
+        {
+          code: "B1030",
+          name: "Sweet Potato Fries (Large)",
+          price: 600,
+          discount: 0,
+        },
+        {
+          code: "B1031",
+          name: "Chicken n Cheese Pasta",
+          price: 1600,
+          discount: 15,
+        },
+        {
+          code: "B1032",
+          name: "Chicken Penne Pasta",
+          price: 1700,
+          discount: 0,
+        },
+        {
+          code: "B1033",
+          name: "Ground Turkey Pasta Bake",
+          price: 2900,
+          discount: 10,
+        },
+        {
+          code: "B1034",
+          name: "Creamy Shrimp Pasta",
+          price: 2000,
+          discount: 0,
+        },
+        { code: "B1035", name: "Lemon Butter Pasta", price: 1950, discount: 0 },
+        { code: "B1036", name: "Tagliatelle Pasta", price: 2400, discount: 1 },
+        { code: "B1037", name: "Baked Ravioli", price: 2000, discount: 1 },
+        {
+          code: "B1038",
+          name: "Fried Chicken (Small)",
+          price: 1200,
+          discount: 0,
+        },
+        {
+          code: "B1039",
+          name: "Fried Chicken (Regular)",
+          price: 2300,
+          discount: 10,
+        },
+        {
+          code: "B1040",
+          name: "Fried Chicken (Large)",
+          price: 3100,
+          discount: 5,
+        },
+        { code: "B1041", name: "Hot Wings (Large)", price: 2400, discount: 0 },
+        {
+          code: "B1042",
+          name: "Devilled Chicken (Large)",
+          price: 900,
+          discount: 0,
+        },
+        {
+          code: "B1043",
+          name: "BBQ Chicken (Regular)",
+          price: 2100,
+          discount: 0,
+        },
+        { code: "B1044", name: "Pepsi (330ml)", price: 990, discount: 5 },
+        { code: "B1045", name: "Coca-Cola (330ml)", price: 1230, discount: 0 },
+        { code: "B1046", name: "Sprite (330ml)", price: 1500, discount: 3 },
+        { code: "B1047", name: "Mirinda (330ml)", price: 850, discount: 7 },
+      ];
 
-                </div>
-                <!--  -->
+      const categories = {
+        Burgers: [
+          "B1001",
+          "B1002",
+          "B1003",
+          "B1004",
+          "B1005",
+          "B1006",
+          "B1007",
+          "B1008",
+          "B1009",
+          "B1010",
+          "B1012",
+          "B1013",
+          "B1014",
+          "B1015",
+        ],
+        Submarines: [
+          "B1016",
+          "B1017",
+          "B1018",
+          "B1019",
+          "B1020",
+          "B1021",
+          "B1022",
+          "B1023",
+          "B1024",
+        ],
+        Fries: ["B1025", "B1026", "B1027", "B1028", "B1029", "B1030"],
+        Pasta: ["B1031", "B1032", "B1033", "B1034", "B1035", "B1036", "B1037"],
+        Chicken: ["B1038", "B1039", "B1040", "B1041", "B1042", "B1043"],
+        Beverages: ["B1044", "B1045", "B1046", "B1047"],
+      };
 
-                <!-- Remove the container if you want to extend the Footer to full width. -->
-                <div class="container my-5">
+      const menuDiv = document.getElementById("menu");
+      const orderList = document.getElementById("orderList");
+      const totalDisplay = document.getElementById("total");
+      const customerNameInput = document.getElementById("customerName");
+      const customerPhoneInput = document.getElementById("customerPhone");
 
-                    <footer class="text-white text-center text-lg-start bg-dark">
-                        <!-- Grid container -->
-                        <div class="container p-4">
-                            <!--Grid row-->
-                            <div class="row mt-4">
-                                <!--Grid column-->
-                                <div class="col-lg-4 col-md-12 mb-4 mb-md-0">
-                                    <h5 class="text-uppercase mb-4">About company</h5>
+      // Customer management elements
+      const customerSection = document.getElementById("customerSection");
+      const menuSection = document.getElementById("menuSection");
+      const customerForm = document.getElementById("customerForm");
+      const custNameInput = document.getElementById("custName");
+      const custPhoneInput = document.getElementById("custPhone");
+      const customerTableBody = document.getElementById("customerTableBody");
+      const editCustomerIdInput = document.getElementById("editCustomerId");
+      const formErrorDiv = document.getElementById("formError");
 
-                                    <p>
-                                        At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti.
-                                    </p>
+      let orderItems = [];
+      let customers = [];
 
-                                    <p>
-                                        Blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias.
-                                    </p>
+      // Show/hide sections function
+      function showSection(sectionId) {
+        if (sectionId === "menuSection") {
+          menuSection.style.display = "block";
+          customerSection.style.display = "none";
+        } else if (sectionId === "customerSection") {
+          customerSection.style.display = "block";
+          menuSection.style.display = "none";
+        }
+      }
 
-                                    <div class="mt-4">
-                                        <!-- Facebook -->
-                                        <a type="button" class="btn btn-floating btn-light btn-lg"><i class="fab fa-facebook-f"></i></a>
-                                        <!-- Dribbble -->
-                                        <a type="button" class="btn btn-floating btn-light btn-lg"><i class="fab fa-dribbble"></i></a>
-                                        <!-- Twitter -->
-                                        <a type="button" class="btn btn-floating btn-light btn-lg"><i class="fab fa-twitter"></i></a>
-                                        <!-- Google + -->
-                                        <a type="button" class="btn btn-floating btn-light btn-lg"><i class="fab fa-google-plus-g"></i></a>
-                                        <!-- Linkedin -->
-                                    </div>
-                                </div>
-                                <!--Grid column-->
+      // Load customers from localStorage
+      function loadCustomers() {
+        const stored = localStorage.getItem("mosCustomers");
+        customers = stored ? JSON.parse(stored) : [];
+        renderCustomerTable();
+      }
 
-                                <!--Grid column-->
-                                <div class="col-lg-4 col-md-6 mb-4 mb-md-0">
-                                    <h5 class="text-uppercase mb-4 pb-1">Search something</h5>
+      // Save customers to localStorage
+      function saveCustomers() {
+        localStorage.setItem("mosCustomers", JSON.stringify(customers));
+      }
 
+      // Render customer table
+      function renderCustomerTable() {
+        if (customers.length === 0) {
+          customerTableBody.innerHTML = `<tr><td colspan="3" style="text-align:center;">No customers found.</td></tr>`;
+          return;
+        }
+        customerTableBody.innerHTML = customers
+          .map(
+            (c, i) => `
+        <tr>
+          <td>${c.name}</td>
+          <td>${c.phone}</td>
+          <td>
+            <button class="btn-small" onclick="editCustomer(${i})" style="background:#007bff;">Edit</button>
+            <button class="btn-small" onclick="deleteCustomer(${i})" style="background:#dc3545;">Delete</button>
+          </td>
+        </tr>
+      `
+          )
+          .join("");
+      }
 
+      // Add or update customer from form
+      customerForm.onsubmit = function (event) {
+        event.preventDefault();
+        formErrorDiv.textContent = "";
 
-                                    <ul class="fa-ul" style="margin-left: 1.65em;">
-                                        <li class="mb-3">
-                                            <span class="fa-li"><i class="fas fa-home"></i></span><span class="ms-2">Warsaw, 00-967, Poland</span>
-                                        </li>
-                                        <li class="mb-3">
-                                            <span class="fa-li"><i class="fas fa-envelope"></i></span><span class="ms-2">contact@example.com</span>
-                                        </li>
-                                        <li class="mb-3">
-                                            <span class="fa-li"><i class="fas fa-phone"></i></span><span class="ms-2">+ 48 234 567 88</span>
-                                        </li>
-                                    </ul>
-                                </div>
-                                <!--Grid column-->
+        const name = custNameInput.value.trim();
+        const phone = custPhoneInput.value.trim();
+        if (!name || !phone) {
+          formErrorDiv.textContent = "Please enter both name and telephone.";
+          return;
+        }
 
-                                <!--Grid column-->
-                                <div class="col-lg-4 col-md-6 mb-4 mb-md-0">
-                                    <h5 class="text-uppercase mb-4">Opening hours</h5>
+        // Check for phone duplicates when adding new customer
+        const editingIndex = editCustomerIdInput.value;
+        if (editingIndex === "") {
+          // Add mode - prevent duplicate phone
+          if (customers.some((c) => c.phone === phone)) {
+            formErrorDiv.textContent = "Telephone number already exists.";
+            return;
+          }
+          customers.push({ name, phone });
+        } else {
+          // Edit mode
+          const idx = parseInt(editingIndex, 10);
+          if (customers.some((c, i) => c.phone === phone && i !== idx)) {
+            formErrorDiv.textContent = "Telephone number already exists.";
+            return;
+          }
+          customers[idx] = { name, phone };
+        }
+        saveCustomers();
+        renderCustomerTable();
+        resetCustomerForm();
+        alert("Customer saved successfully.");
+      };
 
-                                    <table class="table text-center text-white">
-                                        <tbody class="fw-normal">
-                                            <tr>
-                                                <td>Mon - sat:</td>
-                                                <td>8am - 9pm</td>
-                                            </tr>
+      // Reset customer form
+      function resetCustomerForm() {
+        custNameInput.value = "";
+        custPhoneInput.value = "";
+        editCustomerIdInput.value = "";
+        formErrorDiv.textContent = "";
+        customerForm.querySelector("button[type=submit]").textContent =
+          "Add Customer";
+      }
 
-                                            <tr>
-                                                <td>Sunday:</td>
-                                                <td>9am - 10pm</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <!--Grid column-->
-                            </div>
-                            <!--Grid row-->
-                        </div>
-                        <!-- Grid container -->
+      // Edit customer
+      function editCustomer(index) {
+        const c = customers[index];
+        custNameInput.value = c.name;
+        custPhoneInput.value = c.phone;
+        editCustomerIdInput.value = index;
+        customerForm.querySelector("button[type=submit]").textContent =
+          "Update Customer";
+        showSection("customerSection");
+      }
 
-                        <!-- Copyright -->
-                        <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.2);">
-                            © 2023 Copyright:
-                            <a class="text-white" href="">Induja Karalliyadda</a>
-                        </div>
-                        <!-- Copyright -->
-                    </footer>
+      // Delete customer
+      function deleteCustomer(index) {
+        if (confirm(`Delete customer ${customers[index].name}?`)) {
+          customers.splice(index, 1);
+          saveCustomers();
+          renderCustomerTable();
+        }
+      }
 
-                </div>
-                <!--  -->
-                </div>
-                </div>
-                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-                <script src="asset\js\min.js"></script>
-</body>
+      // --- Ordering functions ---
 
+      function renderCategorizedMenu() {
+        menuDiv.innerHTML = "";
+
+        for (const category in categories) {
+          const catHeader = document.createElement("h2");
+          catHeader.textContent = category;
+          menuDiv.appendChild(catHeader);
+
+          const grid = document.createElement("div");
+          grid.className = "grid";
+
+          const catItems = items.filter((item) =>
+            categories[category].includes(item.code)
+          );
+          catItems.forEach((item) => {
+            const card = document.createElement("div");
+            card.className = "item";
+            card.innerHTML = `
+            <img src="https://via.placeholder.com/200x150?text=${
+              item.code
+            }" alt="${item.name}" />
+            <h4>${item.name}</h4>
+            <p>Code: ${item.code}</p>
+            <p>Price: LKR ${item.price}</p>
+            ${
+              item.discount
+                ? `<p style='color:red;'>${item.discount}% OFF</p>`
+                : ""
+            }
+          `;
+            card.onclick = () => addToOrder(item);
+            grid.appendChild(card);
+          });
+
+          menuDiv.appendChild(grid);
+        }
+      }
+
+      function addToOrder(item) {
+        const qty = 1;
+        const existing = orderItems.find((i) => i.code === item.code);
+        if (existing) {
+          existing.qty++;
+        } else {
+          orderItems.push({ ...item, qty });
+        }
+        renderOrder();
+      }
+
+      function renderOrder() {
+        let total = 0;
+        orderList.innerHTML = orderItems
+          .map((i) => {
+            const discounted = i.price * i.qty * (1 - i.discount / 100);
+            total += discounted;
+            return `<div>${i.name} x ${i.qty} = LKR ${discounted.toFixed(
+              2
+            )}</div>`;
+          })
+          .join("");
+        totalDisplay.textContent = total.toFixed(2);
+      }
+
+      function generatePDF() {
+        const name = customerNameInput.value.trim();
+        const phone = customerPhoneInput.value.trim();
+
+        if (!name) {
+          alert("Please enter the customer name.");
+          return;
+        }
+        if (!phone) {
+          alert("Please enter the telephone number.");
+          return;
+        }
+        if (orderItems.length === 0) {
+          alert("No items in the order.");
+          return;
+        }
+
+        // Save customer automatically to customers list if not existing
+        const exists = customers.some((c) => c.phone === phone);
+        if (!exists) {
+          customers.push({ name, phone });
+          saveCustomers();
+          renderCustomerTable();
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFontSize(16);
+        doc.text("MOS Burgers - Receipt", 20, 20);
+        doc.setFontSize(12);
+
+        let y = 30;
+
+        // Add customer info
+        doc.text(`Customer Name: ${name}`, 20, y);
+        y += 10;
+        doc.text(`Telephone: ${phone}`, 20, y);
+        y += 15;
+
+        // Add order items
+        orderItems.forEach((i) => {
+          const line = `${i.name} x ${i.qty} - LKR ${(
+            i.price *
+            i.qty *
+            (1 - i.discount / 100)
+          ).toFixed(2)}`;
+          doc.text(line, 20, y);
+          y += 10;
+        });
+
+        doc.text(`Total: LKR ${totalDisplay.textContent}`, 20, y + 10);
+        doc.save("mos-burgers-receipt.pdf");
+
+        // Clear inputs and order after generating PDF for a new bill
+        customerNameInput.value = "";
+        customerPhoneInput.value = "";
+        orderItems.length = 0; // clear array
+        renderOrder();
+      }
+
+      // Initial setup
+      renderCategorizedMenu();
+      loadCustomers();
+    </script>
+  </body>
 </html>

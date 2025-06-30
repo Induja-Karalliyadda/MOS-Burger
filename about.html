@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MOS Burgers - Full System</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    header, footer { background: #dc3545; color: #fff; padding: 1em; text-align: center; }
+    nav { background: #343a40; padding: 0.5em; text-align: center; }
+    nav a { color: #fff; margin: 0 1em; text-decoration: none; cursor: pointer; }
+    main { padding: 2em; max-width: 900px; margin: auto; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1em; }
+    .item { border: 1px solid #ccc; padding: 1em; text-align: center; cursor: pointer; }
+    .item img { width: 100%; height: 150px; object-fit: cover; }
+    .order-summary, .customer-management, .reports-section { margin-top: 2em; border-top: 1px solid #ccc; padding-top: 1em; }
+    .order-list { margin-top: 1em; }
+    label { display: block; margin-top: 1em; }
+    input, button, select { padding: 0.5em; width: 100%; max-width: 300px; margin-top: 0.2em; }
+    button { cursor: pointer; background: #dc3545; border: none; color: white; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1em; }
+    th, td { border: 1px solid #ccc; padding: 0.5em; text-align: left; }
+    .btn-small { width: auto; padding: 0.3em 0.6em; margin-right: 0.3em; }
+    .error { color: red; margin-top: 0.5em; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>MOS Burgers Full Menu, Customer Management & Reports</h1>
+  </header>
+  <nav>
+    <a onclick="showSection('menuSection')">Menu & Orders</a>
+    <a onclick="showSection('customerSection')">Customer Management</a>
+    <a onclick="showSection('reportsSection')">Reports</a>
+  </nav>
+  <main>
+    <section id="menuSection">[...Menu and Orders here...]
+      <p style="margin-top:1em;"><a href="index.html" target="_blank">About Report Generating</a></p>
+    </section>
+    <section id="customerSection" style="display:none;">[...Customer Management here...]</section>
+    <section id="reportsSection" style="display:none;">
+      <h2>Reports</h2>
+      <button onclick="generateMonthlyReport()">Generate Monthly Sales Report</button>
+      <button onclick="generateTopCustomersReport()">View Top Customers</button>
+      <button onclick="generateAnnualSalesReport()">Generate Annual Sales Report</button>
+      <button onclick="generateItemCountReport()">Generate Item Count Report</button>
+      <div id="reportResults" style="margin-top: 1em;"></div>
+    </section>
+  </main>
+  <footer>
+    <p>&copy; 2025 MOS Burgers</p>
+  </footer>
+
+  <script>
+    function showSection(id) {
+      document.getElementById("menuSection").style.display = "none";
+      document.getElementById("customerSection").style.display = "none";
+      document.getElementById("reportsSection").style.display = "none";
+      document.getElementById(id).style.display = "block";
+    }
+
+    function generateMonthlyReport() {
+      const orders = JSON.parse(localStorage.getItem("mosSales") || "[]");
+      const now = new Date();
+      const monthlySales = orders.filter(o => {
+        const d = new Date(o.date);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      });
+      const total = monthlySales.reduce((sum, o) => sum + o.total, 0);
+      document.getElementById("reportResults").innerHTML = `<h3>Monthly Sales Total: LKR ${total.toFixed(2)}</h3>`;
+    }
+
+    function generateTopCustomersReport() {
+      const orders = JSON.parse(localStorage.getItem("mosSales") || "[]");
+      const now = new Date();
+      const customerCount = {};
+      orders.filter(o => {
+        const d = new Date(o.date);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      }).forEach(o => {
+        if (!customerCount[o.phone]) customerCount[o.phone] = { name: o.name, count: 0 };
+        customerCount[o.phone].count++;
+      });
+      const top = Object.values(customerCount).sort((a,b) => b.count - a.count).slice(0, 5);
+      document.getElementById("reportResults").innerHTML = `<h3>Top Customers This Month</h3><ul>${top.map(c => `<li>${c.name} (${c.count} orders)</li>`).join('')}</ul>`;
+    }
+
+    function generateAnnualSalesReport() {
+      const orders = JSON.parse(localStorage.getItem("mosSales") || "[]");
+      const thisYear = new Date().getFullYear();
+      const yearlySales = orders.filter(o => new Date(o.date).getFullYear() === thisYear);
+      const total = yearlySales.reduce((sum, o) => sum + o.total, 0);
+      document.getElementById("reportResults").innerHTML = `<h3>Annual Sales Total: LKR ${total.toFixed(2)}</h3>`;
+    }
+
+    function generateItemCountReport() {
+      const orders = JSON.parse(localStorage.getItem("mosSales") || "[]");
+      const countMap = {};
+      orders.forEach(o => {
+        o.items.forEach(i => {
+          if (!countMap[i.code]) countMap[i.code] = { name: i.name, qty: 0 };
+          countMap[i.code].qty += i.qty;
+        });
+      });
+      const sorted = Object.values(countMap).sort((a, b) => b.qty - a.qty);
+      document.getElementById("reportResults").innerHTML = `<h3>Item Count Report</h3><ul>${sorted.map(i => `<li>${i.name}: ${i.qty}</li>`).join('')}</ul>`;
+    }
+
+    function saveSale(name, phone, items, total) {
+      const sales = JSON.parse(localStorage.getItem("mosSales") || "[]");
+      sales.push({ name, phone, items, total, date: new Date().toISOString() });
+      localStorage.setItem("mosSales", JSON.stringify(sales));
+    }
+  </script>
+</body>
+</html>
